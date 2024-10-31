@@ -1,0 +1,103 @@
+{
+    "name": "local-sync",
+    "publisher": "anweber",
+    "version": "1.0.0",
+    "description": "Local Settings Sync",
+    "displayName": "local sync",
+    "main": "dist/extension.js",
+    "icon": "icon.png",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/AnWeber/vscode-local-sync"
+    },
+    "bugs": {
+        "url": "https://github.com/AnWeber/vscode-local-sync/issues"
+    },
+    "qna": "https://github.com/AnWeber/vscode-local-sync/discussions",
+    "license": "MIT",
+    "categories": [
+        "Other"
+    ],
+    "keywords": [
+        "sync",
+        "settings-sync"
+    ],
+    "engines": {
+        "vscode": "^1.60.0"
+    },
+    "extensionKind": [
+        "ui"
+    ],
+    "activationEvents": [
+        "onStartupFinished"
+    ],
+    "contributes": {
+        "configuration": [
+            {
+                "title": "local-sync",
+                "description": "settings for local-sync",
+                "properties": {
+                    "local-sync.backupPath": {
+                        "type": "string",
+                        "description": "path to backup files"
+                    },
+                    "local-sync.autobackup": {
+                        "type": "boolean",
+                        "default": true,
+                        "description": "Auto Backup files on change"
+                    },
+                    "local-sync.autorestore": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Auto Restore settings on startup"
+                    },
+                    "local-sync.removeExtensions": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "removeExtensions on restore"
+                    }
+                }
+            }
+        ],
+        "commands": [
+            {
+                "title": "backup",
+                "category": "local-sync",
+                "command": "local-sync.backup",
+                "icon": "$(redo)"
+            },
+            {
+                "title": "restore",
+                "category": "local-sync",
+                "command": "local-sync.restore",
+                "icon": "$(discard)"
+            },
+            {
+                "title": "sync",
+                "category": "local-sync.",
+                "command": "local-sync.sync",
+                "icon": "$(sync)"
+            }
+        ]
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run build",
+        "build": "esbuild ./src/extension.ts --bundle --outdir=dist/ --minify --sourcemap --platform=node --external:vscode --format=cjs",
+        "start": "npm run build -- --watch",
+        "lockfile-lint": "lockfile-lint --path package-lock.json --validate-https --allowed-hosts npm --validate-checksum --validate-integrity",
+        "eslint": "eslint .",
+        "lint": "npm run eslint && npm run lockfile-lint"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.13.0",
+        "prettier": "^3.3.3",
+        "@types/node": "^22.8.6",
+        "@types/vscode": "^1.60.0",
+        "esbuild": "^0.24.0",
+        "eslint": "^9.13.0",
+        "got": "^14.4.3",
+        "lockfile-lint": "^4.14.0",
+        "typescript": "^5.6.3",
+        "typescript-eslint": "^8.12.2"
+    }
+}
