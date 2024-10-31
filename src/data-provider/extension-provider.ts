@@ -17,10 +17,16 @@ export const ExtensionProviderId = 'extensions';
 export class ExtensionProvider implements DataProvider {
   readonly id = ExtensionProviderId;
   public async backup({ path }: DataOptions): Promise<void> {
-    const installedExtensions = this.getInstalledExtensions();
+    let installedExtensions = this.getInstalledExtensions();
     logger.info('extensions backup', installedExtensions);
+
+    if (!this.shouldRemoveExtensions) {
+      const extensions: Array<string> = await readJsonContent(this.getFilepath(path), []);
+      installedExtensions = [...extensions, ...installedExtensions].filter((v, index, arr) => arr.indexOf(v) === index);
+    }
+
     const filename = this.getFilepath(path);
-    await writeJsonContent(filename, installedExtensions);
+    await writeJsonContent(filename, installedExtensions.sort());
   }
 
   private getInstalledExtensions() {
@@ -28,12 +34,15 @@ export class ExtensionProvider implements DataProvider {
       .filter((ext: Extension) => !ext.packageJSON.isBuiltin)
       .map((ext: Extension) => {
         return `${ext.packageJSON.publisher}.${ext.packageJSON.name}`;
-      })
-      .sort();
+      });
   }
 
   private getFilepath(path: vscode.Uri) {
     return vscode.Uri.joinPath(path, 'extension.json');
+  }
+
+  private get shouldRemoveExtensions(): boolean {
+    return !!getConfigSetting().get<boolean>('removeExtensions');
   }
 
   public async restore({ path }: DataOptions): Promise<void> {
@@ -41,7 +50,7 @@ export class ExtensionProvider implements DataProvider {
     const installedExtensions = this.getInstalledExtensions();
 
     const missingExtensions = extensions.filter(ext => !installedExtensions.includes(ext));
-    const deletedExtensions = getConfigSetting().get('removeExtensions')
+    const deletedExtensions = this.shouldRemoveExtensions
       ? installedExtensions.filter(ext => !extensions.includes(ext))
       : [];
     logger.info('extensions restore', missingExtensions, ' deleted:', deletedExtensions);
