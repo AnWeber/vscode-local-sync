@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { logger } from './initOutputChannel';
 
-export async function readJsonContent<T>(path: vscode.Uri, defaultVal: T): Promise<T> {
+export async function readJsonContent<T>(path: vscode.Uri): Promise<T | undefined> {
   try {
     const stats = await vscode.workspace.fs.stat(path);
     if (stats.type === vscode.FileType.File) {
@@ -12,7 +12,7 @@ export async function readJsonContent<T>(path: vscode.Uri, defaultVal: T): Promi
   } catch (err) {
     logger.error('readJsonError', path, err);
   }
-  return defaultVal;
+  return undefined;
 }
 
 export async function writeJsonContent(path: vscode.Uri, content: unknown): Promise<void> {

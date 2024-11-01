@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { initOutputChannel } from './initOutputChannel';
+import { initOutputChannel, logger } from './initOutputChannel';
 import { SyncService } from './sync-service';
 import { watchConfigSettings } from './config';
 
@@ -12,8 +12,20 @@ export function activate(context: vscode.ExtensionContext): void {
       vscode.commands.registerCommand('local-sync.backup', async () => {
         await syncService.backup();
       }),
+      vscode.commands.registerCommand('local-sync.backup.dryrun', async () => {
+        logger.show(true);
+        await syncService.backup({
+          dryRun: true,
+        });
+      }),
       vscode.commands.registerCommand('local-sync.restore', async () => {
         await syncService.restore();
+      }),
+      vscode.commands.registerCommand('local-sync.restore.dryrun', async () => {
+        logger.show(true);
+        await syncService.restore({
+          dryRun: true,
+        });
       }),
 
       watchConfigSettings(config => {

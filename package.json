@@ -1,7 +1,7 @@
 {
     "name": "local-sync",
     "publisher": "anweber",
-    "version": "1.0.1",
+    "version": "1.1.0",
     "description": "Local Settings Sync",
     "displayName": "local sync",
     "main": "dist/extension.js",
@@ -54,7 +54,23 @@
                     "local-sync.removeExtensions": {
                         "type": "boolean",
                         "default": false,
-                        "description": "remove extensions on restore or backup"
+                        "description": "remove extensions on restore"
+                    },
+                    "local-sync.ignoreSettings": {
+                        "type": "array",
+                        "default": [],
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "ignore extensions from sync"
+                    },
+                    "local-sync.ignoreExtensions": {
+                        "type": "array",
+                        "default": [],
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "ignore extensions from sync"
                     }
                 }
             }
@@ -67,22 +83,28 @@
                 "icon": "$(redo)"
             },
             {
+                "title": "backup (only log output)",
+                "category": "local-sync",
+                "command": "local-sync.backup.dryrun",
+                "icon": "$(redo)"
+            },
+            {
                 "title": "restore",
                 "category": "local-sync",
                 "command": "local-sync.restore",
                 "icon": "$(discard)"
             },
             {
-                "title": "sync",
-                "category": "local-sync.",
-                "command": "local-sync.sync",
-                "icon": "$(sync)"
+                "title": "restore (only log output)",
+                "category": "local-sync",
+                "command": "local-sync.restore.dryrun",
+                "icon": "$(discard)"
             }
         ]
     },
     "scripts": {
         "vscode:prepublish": "npm run build",
-        "build": "esbuild ./src/extension.ts --bundle --outdir=dist/ --minify --sourcemap --platform=node --external:vscode --format=cjs",
+        "build": "esbuild ./src/extension.ts --bundle --outdir=dist/ --sourcemap --platform=node --external:vscode --format=cjs",
         "start": "npm run build -- --watch",
         "lockfile-lint": "lockfile-lint --path package-lock.json --validate-https --allowed-hosts npm --validate-checksum --validate-integrity",
         "eslint": "eslint .",

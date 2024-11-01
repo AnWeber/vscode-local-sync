@@ -13,5 +13,11 @@ sync your settings to a local directory
 - set setting `local-sync.backupPath` to your sync folder
 
 
+## commands
+
+- `local-sync.backup`: backup your settings to sync folder
+- `local-sync.restore`: restore your settings from sync folder
+
+
 ## License
 [MIT License](LICENSE)
