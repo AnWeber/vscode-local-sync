@@ -1,7 +1,7 @@
 {
     "name": "local-sync",
     "publisher": "anweber",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "description": "Local Settings Sync",
     "displayName": "local sync",
     "main": "dist/extension.js",

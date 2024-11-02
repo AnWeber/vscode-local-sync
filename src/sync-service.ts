@@ -7,6 +7,8 @@ export class SyncService {
   #userFolder: vscode.Uri;
   #dataProviders: Array<provider.DataProvider>;
 
+  #isRestoring = false;
+
   constructor(context: vscode.ExtensionContext) {
     this.#extensionFolder = vscode.Uri.joinPath(context.extensionUri, '..', 'extensions.json');
     this.#userFolder = this.getUserfolder(context);
@@ -40,6 +42,7 @@ export class SyncService {
   }
 
   public async restore(options?: { providerId?: string; dryRun?: boolean }): Promise<void> {
+    this.#isRestoring = true;
     await this.runWithLock(async path => {
       if (!this.backupPath) {
         return;
@@ -52,6 +55,7 @@ export class SyncService {
         });
       }
     });
+    this.#isRestoring = false;
   }
 
   private getUserfolder(context: vscode.ExtensionContext): vscode.Uri {
@@ -74,15 +78,23 @@ export class SyncService {
 
     return [
       vscode.extensions.onDidChange(async () => {
-        if (vscode.window.state.focused && this.backupPath) {
+        if (vscode.window.state.focused && this.backupPath && !this.#isRestoring) {
           logger.info('Extensions changed');
           await this.backup({
             providerId: provider.ExtensionProviderId,
           });
         }
       }),
-      fileSystemWatcher.onDidCreate(() => this.backup()),
-      fileSystemWatcher.onDidChange(() => this.backup()),
+      fileSystemWatcher.onDidCreate(async () => {
+        if (!this.#isRestoring) {
+          await this.backup();
+        }
+      }),
+      fileSystemWatcher.onDidChange(async () => {
+        if (!this.#isRestoring) {
+          await this.backup();
+        }
+      }),
       fileSystemWatcher,
     ];
   }
@@ -91,7 +103,7 @@ export class SyncService {
     if (!this.backupPath) {
       return;
     }
-    const lockUri = vscode.Uri.joinPath(this.backupPath, '.lock');
+    const lockUri = vscode.Uri.joinPath(this.backupPath, 'sync.lock');
     try {
       await vscode.workspace.fs.stat(lockUri);
       logger.warn('lock file exists');
@@ -106,6 +118,12 @@ export class SyncService {
     }
     await action(this.backupPath);
     try {
+      // wait for 200ms before releasing lock
+      await new Promise<void>(resolve =>
+        setTimeout(() => {
+          resolve();
+        }, 200)
+      );
       await vscode.workspace.fs.delete(lockUri);
       return;
     } catch (err) {
