@@ -45,17 +45,22 @@ export class SettingsProvider implements DataProvider {
     const source = this.getFilepath(path);
     const target = this.getFilepath(userFolder);
 
-    const ignoredValues = this.getIgnoreSettings().map(key => ({
-      key,
-      value: vscode.workspace.getConfiguration(key),
-    }));
+    const ignoredValues = this.getIgnoreSettings().map(key => {
+      const [scope, ...configKey] = key.split('.').reverse();
+      return {
+        key,
+        value: vscode.workspace.getConfiguration(configKey.reverse().join('.')).get(scope),
+      };
+    });
     const settings = await readJsonContent<Record<string, unknown>>(source);
     if (!settings) {
       return;
     }
 
     for (const { key, value } of ignoredValues) {
-      settings[key] = value;
+      if (value !== undefined) {
+        settings[key] = value;
+      }
     }
     if (!dryRun) {
       logger.info('settings restore');

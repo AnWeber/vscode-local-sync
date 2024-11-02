@@ -38,9 +38,9 @@ export function activate(context: vscode.ExtensionContext): void {
           result.push(...syncService.watchForChanges());
         }
         if (config.get('autorestore') && !isRestored) {
-          isRestored = true;
           void syncService.restore();
         }
+        isRestored = true;
         return result;
       }),
     ]
