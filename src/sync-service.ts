@@ -21,16 +21,15 @@ export class SyncService {
   public backupPath: vscode.Uri | undefined;
 
   public async backup(options?: { providerId?: string; dryRun?: boolean }): Promise<void> {
-    if (!this.backupPath) {
-      return;
-    }
-    for (const provider of this.getDataProviders(options?.providerId)) {
-      await provider.backup({
-        path: this.backupPath,
-        userFolder: this.#userFolder,
-        dryRun: !!options?.dryRun,
-      });
-    }
+    await this.runWithLock(async path => {
+      for (const provider of this.getDataProviders(options?.providerId)) {
+        await provider.backup({
+          path,
+          userFolder: this.#userFolder,
+          dryRun: !!options?.dryRun,
+        });
+      }
+    });
   }
 
   private getDataProviders(providerId: string | undefined) {
@@ -41,16 +40,18 @@ export class SyncService {
   }
 
   public async restore(options?: { providerId?: string; dryRun?: boolean }): Promise<void> {
-    if (!this.backupPath) {
-      return;
-    }
-    for (const provider of this.getDataProviders(options?.providerId)) {
-      await provider.restore({
-        path: this.backupPath,
-        userFolder: this.#userFolder,
-        dryRun: !!options?.dryRun,
-      });
-    }
+    await this.runWithLock(async path => {
+      if (!this.backupPath) {
+        return;
+      }
+      for (const provider of this.getDataProviders(options?.providerId)) {
+        await provider.restore({
+          path,
+          userFolder: this.#userFolder,
+          dryRun: !!options?.dryRun,
+        });
+      }
+    });
   }
 
   private getUserfolder(context: vscode.ExtensionContext): vscode.Uri {
@@ -84,5 +85,31 @@ export class SyncService {
       fileSystemWatcher.onDidChange(() => this.backup()),
       fileSystemWatcher,
     ];
+  }
+
+  private async runWithLock(action: (path: vscode.Uri) => Promise<void>) {
+    if (!this.backupPath) {
+      return;
+    }
+    const lockUri = vscode.Uri.joinPath(this.backupPath, '.lock');
+    try {
+      await vscode.workspace.fs.stat(lockUri);
+      logger.warn('lock file exists');
+      return;
+    } catch {
+      try {
+        await vscode.workspace.fs.writeFile(lockUri, new Uint8Array());
+      } catch (err) {
+        logger.warn('lock file was not created', err);
+        return;
+      }
+    }
+    await action(this.backupPath);
+    try {
+      await vscode.workspace.fs.delete(lockUri);
+      return;
+    } catch (err) {
+      logger.error('lock file not deleted', err);
+    }
   }
 }

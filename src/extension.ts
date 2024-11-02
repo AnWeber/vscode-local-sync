@@ -5,6 +5,7 @@ import { watchConfigSettings } from './config';
 
 export function activate(context: vscode.ExtensionContext): void {
   const syncService = new SyncService(context);
+
   let isRestored = false;
   context.subscriptions.push(
     ...[

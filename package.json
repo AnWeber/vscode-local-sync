@@ -1,7 +1,7 @@
 {
     "name": "local-sync",
     "publisher": "anweber",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "description": "Local Settings Sync",
     "displayName": "local sync",
     "main": "dist/extension.js",
@@ -111,12 +111,12 @@
         "lint": "npm run eslint && npm run lockfile-lint"
     },
     "devDependencies": {
-        "@eslint/js": "^9.13.0",
+        "@eslint/js": "^9.14.0",
         "prettier": "^3.3.3",
         "@types/node": "^22.8.6",
         "@types/vscode": "^1.60.0",
         "esbuild": "^0.24.0",
-        "eslint": "^9.13.0",
+        "eslint": "^9.14.0",
         "got": "^14.4.3",
         "lockfile-lint": "^4.14.0",
         "typescript": "^5.6.3",
