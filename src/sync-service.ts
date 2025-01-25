@@ -9,6 +9,14 @@ export class SyncService {
 
   #isRestoring = false;
 
+  backupTimer?: NodeJS.Timeout;
+  private backupDebounced = () => {
+    clearTimeout(this.backupTimer);
+    this.backupTimer = setTimeout(() => {
+      void this.backup();
+    }, 300);
+  };
+
   constructor(context: vscode.ExtensionContext) {
     this.#extensionFolder = vscode.Uri.joinPath(context.extensionUri, '..', 'extensions.json');
     this.#userFolder = this.getUserfolder(context);
@@ -85,14 +93,14 @@ export class SyncService {
           });
         }
       }),
-      fileSystemWatcher.onDidCreate(async () => {
+      fileSystemWatcher.onDidCreate(() => {
         if (!this.#isRestoring) {
-          await this.backup();
+          this.backupDebounced();
         }
       }),
-      fileSystemWatcher.onDidChange(async () => {
+      fileSystemWatcher.onDidChange(() => {
         if (!this.#isRestoring) {
-          await this.backup();
+          this.backupDebounced();
         }
       }),
       fileSystemWatcher,

@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { jsonc } from 'jsonc';
 import { logger } from './initOutputChannel';
 
 export async function readJsonContent<T>(path: vscode.Uri): Promise<T | undefined> {
@@ -7,7 +8,8 @@ export async function readJsonContent<T>(path: vscode.Uri): Promise<T | undefine
     if (stats.type === vscode.FileType.File) {
       const content = await vscode.workspace.fs.readFile(path);
       const text = Buffer.from(content).toString('utf-8');
-      return JSON.parse(text) as T;
+      const result = (await jsonc.parse(text)) as T;
+      return result;
     }
   } catch (err) {
     logger.error('readJsonError', path, err);
@@ -17,7 +19,7 @@ export async function readJsonContent<T>(path: vscode.Uri): Promise<T | undefine
 
 export async function writeJsonContent(path: vscode.Uri, content: unknown): Promise<void> {
   try {
-    await vscode.workspace.fs.writeFile(path, Buffer.from(JSON.stringify(content, undefined, 2)));
+    await vscode.workspace.fs.writeFile(path, Buffer.from(jsonc.stringify(content, undefined, 2)));
   } catch (err) {
     logger.error('writeJsonError', path, err);
   }

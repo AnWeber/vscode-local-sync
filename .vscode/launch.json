@@ -7,9 +7,9 @@
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
 			"args": [
-				"--extensionDevelopmentPath=${workspaceFolder}",
-				"\\\\wsl.localhost\\Ubuntu\\home\\andreas\\.dotfiles\\settings\\vscode"
+				"--extensionDevelopmentPath=${workspaceFolder}"
 			],
+			"sourceMaps": true,
 			"outFiles": [
 				"${workspaceFolder}/dist/**/*.js"
 			]
