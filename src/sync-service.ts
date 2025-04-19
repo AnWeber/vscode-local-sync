@@ -11,6 +11,9 @@ export class SyncService {
 
   backupTimer?: NodeJS.Timeout;
   private backupDebounced = () => {
+    if (this.#isRestoring) {
+      return;
+    }
     clearTimeout(this.backupTimer);
     this.backupTimer = setTimeout(() => {
       void this.backup();
@@ -31,15 +34,28 @@ export class SyncService {
   public backupPath: vscode.Uri | undefined;
 
   public async backup(options?: { providerId?: string; dryRun?: boolean }): Promise<void> {
-    await this.runWithLock(async path => {
-      for (const provider of this.getDataProviders(options?.providerId)) {
-        await provider.backup({
-          path,
-          userFolder: this.#userFolder,
-          dryRun: !!options?.dryRun,
-        });
-      }
-    });
+    if (this.#isRestoring) {
+      logger.debug('backup prevented because restore is running');
+      return;
+    }
+    logger.debug('backup started');
+    try {
+      await this.runWithLock(async path => {
+        for (const provider of this.getDataProviders(options?.providerId)) {
+          logger.debug(`provider ${provider.id} backup started`);
+          await provider.backup({
+            path,
+            userFolder: this.#userFolder,
+            dryRun: !!options?.dryRun,
+          });
+          logger.debug(`provider ${provider.id} backup finished`);
+        }
+      });
+    } catch (err) {
+      logger.error('unhandled error in backup', err);
+    } finally {
+      logger.debug('backup finished');
+    }
   }
 
   private getDataProviders(providerId: string | undefined) {
@@ -50,20 +66,35 @@ export class SyncService {
   }
 
   public async restore(options?: { providerId?: string; dryRun?: boolean }): Promise<void> {
+    if (this.#isRestoring) {
+      logger.debug('restore prevented because restore is running');
+      return;
+    }
+    logger.debug('restore started');
     this.#isRestoring = true;
-    await this.runWithLock(async path => {
-      if (!this.backupPath) {
-        return;
-      }
-      for (const provider of this.getDataProviders(options?.providerId)) {
-        await provider.restore({
-          path,
-          userFolder: this.#userFolder,
-          dryRun: !!options?.dryRun,
-        });
-      }
-    });
-    this.#isRestoring = false;
+
+    try {
+      await this.runWithLock(async path => {
+        if (!this.backupPath) {
+          logger.warn('missing backup path setting');
+          return;
+        }
+        for (const provider of this.getDataProviders(options?.providerId)) {
+          logger.debug(`provider ${provider.id} restore started`);
+          await provider.restore({
+            path,
+            userFolder: this.#userFolder,
+            dryRun: !!options?.dryRun,
+          });
+          logger.debug(`provider ${provider.id} restore finished`);
+        }
+      });
+    } catch (err) {
+      logger.error('unhandled error in restore', err);
+    } finally {
+      this.#isRestoring = false;
+      logger.debug('restore finished');
+    }
   }
 
   private getUserfolder(context: vscode.ExtensionContext): vscode.Uri {
@@ -109,6 +140,7 @@ export class SyncService {
 
   private async runWithLock(action: (path: vscode.Uri) => Promise<void>) {
     if (!this.backupPath) {
+      logger.warn('no backup path configured');
       return;
     }
     const lockUri = vscode.Uri.joinPath(this.backupPath, 'sync.lock');
