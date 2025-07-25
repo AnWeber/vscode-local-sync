@@ -53,8 +53,8 @@ export class ExtensionProvider implements DataProvider {
   }
 
   private filterIgnoredExtensions(extensions: Array<string> | undefined): Array<string> {
-    const ignoredExtensios = getConfigSetting().get<Array<string>>('ignoreExtensions') || [];
-    return (extensions || []).filter(ext => !ignoredExtensios.includes(ext));
+    const ignoredExtensions = getConfigSetting().get<Array<string>>('ignoreExtensions') || [];
+    return (extensions || []).filter(ext => !ignoredExtensions.includes(ext.trim()));
   }
 
   public async restore({ path, dryRun }: DataOptions): Promise<void> {
